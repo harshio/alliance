@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Request, Depends, APIRouter, Body
+from fastapi import FastAPI, HTTPException, Request, Depends, APIRouter, Body, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 import requests
 from pydantic import BaseModel
@@ -7,10 +7,12 @@ from sqlalchemy import func, distinct
 from sqlalchemy.orm import Session
 from fastapi.responses import JSONResponse
 from models import Question as DBQuestion, SessionLocal
+from multiplayer import WebSocketManager
 import json
 import re
 
 app = FastAPI()
+manager = WebSocketManager()
 
 def get_db():
     db = SessionLocal()
@@ -94,3 +96,31 @@ def save_question(question: QuestionIn, db: Session = Depends(get_db)):
 def get_unique_set_number(db: Session = Depends(get_db)):
     results = db.query(distinct(DBQuestion.setNumber)).all()
     return [row[0] for row in results]
+
+#from the perspective of 'our' client
+@app.websocket('/ws')
+#FasAPI attaches IP metadata to websocket object automatically
+async def websocket_endpoint(websocket: WebSocket):
+    #manager accepts client and adds it to its list of connected clients
+    #the url from the frontend will contain a value of client_id
+    client_id = websocket.query_params.get("client_id")
+    #connects client to server
+    await manager.connect(websocket, client_id)
+    #amount of all clients connected to server by the time 'our' client
+    #connected to the server
+    print(len(manager.connected_clients))
+    
+    try:
+        while True:
+            #turns message sent by 'our' client to server via ws.send(JSON.stringify(message)) into json object
+            message = await websocket.receive_json()
+            recipient_id = message.get("to")
+            #server sends message just sent to it by 'our' client to client specified by recipient_id
+            await manager.send_message_to(recipient_id, {
+                "from": client_id,
+                "content": message.get("content"),
+                "type": message.get("type")
+            })
+    #disconnection case
+    except WebSocketDisconnect:
+        await manager.disconnect(client_id)
