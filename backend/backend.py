@@ -117,12 +117,22 @@ async def websocket_endpoint(websocket: WebSocket):
             #turns message sent by 'our' client to server via ws.send(JSON.stringify(message)) into json object
             message = await websocket.receive_json()
             recipient_id = message.get("to")
+            print(recipient_id)
+            if recipient_id == "server":
+                print("I am the one the sun the sun the holy shit")
+                await manager.send_message_to("host", {
+                    "from": "server",
+                    "content": str(len(manager.connected_clients) - 1),
+                    "type": message.get("type")
+                })
+                print(str(len(manager.connected_clients) - 1))
             #server sends message just sent to it by 'our' client to client specified by recipient_id
-            await manager.send_message_to(recipient_id, {
-                "from": client_id,
-                "content": message.get("content"),
-                "type": message.get("type")
-            })
+            else:
+                await manager.send_message_to(recipient_id, {
+                    "from": client_id,
+                    "content": message.get("content"),
+                    "type": message.get("type")
+                })
     #disconnection case
     except WebSocketDisconnect:
         await manager.disconnect(client_id)
