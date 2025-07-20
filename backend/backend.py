@@ -103,6 +103,8 @@ def get_unique_set_number(db: Session = Depends(get_db)):
 async def websocket_endpoint(websocket: WebSocket):
     #manager accepts client and adds it to its list of connected clients
     #the url from the frontend will contain a value of client_id
+    #when we implement concurrency, we will create a new server
+    #instance whenever a client named host wants to join a server
     client_id = websocket.query_params.get("client_id")
     #connects client to server
     await manager.connect(websocket, client_id)
