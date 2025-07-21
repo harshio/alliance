@@ -108,8 +108,16 @@ async def websocket_endpoint(websocket: WebSocket):
     client_id = websocket.query_params.get("client_id")
     #connects client to server
     await manager.connect(websocket, client_id)
-    #amount of all clients connected to server by the time 'our' client
-    #connected to the server
+    #the Room component will be something visible to player clients
+    #so we need to send a message to all player clients connected to the server
+    #whenever each player (except for the host client) joins the server
+    for client_identification in manager.connected_clients:
+        if client_identification != "host":
+            await manager.send_message_to(client_identification, {
+                "from": "server",
+                "content": json.dumps([key for key in manager.connected_clients if key != "host"]),
+                "type": "text"
+            })
     print(len(manager.connected_clients))
     
     try:
@@ -118,21 +126,11 @@ async def websocket_endpoint(websocket: WebSocket):
             message = await websocket.receive_json()
             recipient_id = message.get("to")
             print(recipient_id)
-            if recipient_id == "server":
-                print("I am the one the sun the sun the holy shit")
-                await manager.send_message_to("host", {
-                    "from": "server",
-                    "content": str(len(manager.connected_clients) - 1),
-                    "type": message.get("type")
-                })
-                print(str(len(manager.connected_clients) - 1))
-            #server sends message just sent to it by 'our' client to client specified by recipient_id
-            else:
-                await manager.send_message_to(recipient_id, {
-                    "from": client_id,
-                    "content": message.get("content"),
-                    "type": message.get("type")
-                })
+            await manager.send_message_to(recipient_id, {
+                "from": client_id,
+                "content": message.get("content"),
+                "type": message.get("type")
+            })
     #disconnection case
     except WebSocketDisconnect:
         await manager.disconnect(client_id)
