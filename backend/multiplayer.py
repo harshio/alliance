@@ -5,15 +5,26 @@ class WebSocketManager:
         #for us to to choose between websockets to 
         #send information to
         self.connected_clients: dict[str, WebSocket] = {}
+        self.activeSet: int = 0
 
     #this function connects a client to the server
     #and adds them to the list
-    async def connect(self, websocket: WebSocket, client_id: str):
+    async def player_connect(self, websocket: WebSocket, client_id: str, client_number=2, server_number=3) -> bool:
         #websocket is a representation of the client
         #it contains information like the IP address of
         #the client
+        if client_number == server_number:
+            await websocket.accept()
+            self.connected_clients[client_id] = websocket
+            return True
+        else:
+            print("CRY ABOUT IT BITCH WE'RE TESTING")
+            return False
+    
+    async def host_connect(self, websocket: WebSocket, client_id: str) -> bool:
         await websocket.accept()
         self.connected_clients[client_id] = websocket
+        return True
 
     #this function disconnects a client from the server
     async def disconnect(self, client_id: str):

@@ -101,13 +101,21 @@ def get_unique_set_number(db: Session = Depends(get_db)):
 @app.websocket('/ws')
 #FasAPI attaches IP metadata to websocket object automatically
 async def websocket_endpoint(websocket: WebSocket):
-    #manager accepts client and adds it to its list of connected clients
-    #the url from the frontend will contain a value of client_id
-    #when we implement concurrency, we will create a new server
-    #instance whenever a client named host wants to join a server
     client_id = websocket.query_params.get("client_id")
+    setNumber = websocket.query_params.get("setNumber")
+    print("This is " + setNumber)
     #connects client to server
-    await manager.connect(websocket, client_id)
+    #if client_id == "host", then we will connect without needing a key
+    #otherwise, we're forced to use player_connect
+    if client_id == "host":
+        await manager.host_connect(websocket, client_id)
+    else:
+        print("HI MOM")
+        print("Player Number: " + setNumber)
+        print("Actual Number: " + str(manager.activeSet))
+        thing = await manager.player_connect(websocket, client_id, int(setNumber), manager.activeSet)
+        if thing == False:
+            return
     #the Room component will be something visible to player clients
     #so we need to send a message to all player clients connected to the server
     #whenever each player (except for the host client) joins the server
@@ -126,11 +134,15 @@ async def websocket_endpoint(websocket: WebSocket):
             message = await websocket.receive_json()
             recipient_id = message.get("to")
             print(recipient_id)
-            await manager.send_message_to(recipient_id, {
-                "from": client_id,
-                "content": message.get("content"),
-                "type": message.get("type")
-            })
+            if message.get("to") == "server":
+                manager.activeSet = int(message.get("content"))
+                print(manager.activeSet)
+            else:
+                await manager.send_message_to(recipient_id, {
+                    "from": client_id,
+                    "content": message.get("content"),
+                    "type": message.get("type")
+                })
     #disconnection case
     except WebSocketDisconnect:
         await manager.disconnect(client_id)
