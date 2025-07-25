@@ -6,6 +6,8 @@ class WebSocketManager:
         #send information to
         self.connected_clients: dict[str, WebSocket] = {}
         self.activeSet: int = 0
+        self.host_client: dict[str, WebSocket] = {}
+        self.playersDone: int = 0
 
     #this function connects a client to the server
     #and adds them to the list
@@ -23,7 +25,7 @@ class WebSocketManager:
     
     async def host_connect(self, websocket: WebSocket, client_id: str) -> bool:
         await websocket.accept()
-        self.connected_clients[client_id] = websocket
+        self.host_client[client_id] = websocket
         return True
 
     #this function disconnects a client from the server

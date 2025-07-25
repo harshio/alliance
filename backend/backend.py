@@ -103,15 +103,14 @@ def get_unique_set_number(db: Session = Depends(get_db)):
 async def websocket_endpoint(websocket: WebSocket):
     client_id = websocket.query_params.get("client_id")
     setNumber = websocket.query_params.get("setNumber")
-    print("This is " + setNumber)
     #connects client to server
     #if client_id == "host", then we will connect without needing a key
     #otherwise, we're forced to use player_connect
-    if client_id == "host":
+    if setNumber is None:
         await manager.host_connect(websocket, client_id)
     else:
         print("HI MOM")
-        print("Player Number: " + setNumber)
+        print("Player Number: " + str(setNumber))
         print("Actual Number: " + str(manager.activeSet))
         thing = await manager.player_connect(websocket, client_id, int(setNumber), manager.activeSet)
         if thing == False:
@@ -120,29 +119,25 @@ async def websocket_endpoint(websocket: WebSocket):
     #so we need to send a message to all player clients connected to the server
     #whenever each player (except for the host client) joins the server
     for client_identification in manager.connected_clients:
-        if client_identification != "host":
-            await manager.send_message_to(client_identification, {
-                "from": "server",
-                "content": json.dumps([key for key in manager.connected_clients if key != "host"]),
-                "type": "text"
-            })
+        await manager.send_message_to(client_identification, {
+            "type": "playerNames",
+            "content": list(manager.connected_clients.keys())
+        })
     print(len(manager.connected_clients))
     
     try:
         while True:
             #turns message sent by 'our' client to server via ws.send(JSON.stringify(message)) into json object
             message = await websocket.receive_json()
-            recipient_id = message.get("to")
-            print(recipient_id)
-            if message.get("to") == "server":
-                manager.activeSet = int(message.get("content"))
+            if message.get("type") == "sessionID": #this is getting replaced by the sessionID message
+                manager.activeSet = message.get("content")
                 print(manager.activeSet)
-            else:
-                await manager.send_message_to(recipient_id, {
-                    "from": client_id,
-                    "content": message.get("content"),
-                    "type": message.get("type")
-                })
+            elif message.get("type") == "startGame":
+               for client_identification in manager.connected_clients:
+                   await manager.send_message_to(client_identification, {
+                        "type": "startGame",
+                        "content": True
+                    })
     #disconnection case
     except WebSocketDisconnect:
         await manager.disconnect(client_id)
