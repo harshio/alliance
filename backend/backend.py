@@ -135,8 +135,7 @@ async def websocket_endpoint(websocket: WebSocket):
             elif message.get("type") == "startGame":
                for client_identification in manager.connected_clients:
                    await manager.send_message_to(client_identification, {
-                        "type": "startGame",
-                        "content": True
+                        "type": "startGame"
                     })
     #disconnection case
     except WebSocketDisconnect:
