@@ -137,6 +137,13 @@ async def websocket_endpoint(websocket: WebSocket):
                    await manager.send_message_to(client_identification, {
                         "type": "startGame"
                     })
+            elif message.get("type") == "playerDone":
+                finished_question = manager.increment()
+                if finished_question:
+                    for client_identification in manager.connected_clients:
+                        await manager.send_message_to(client_identification, {
+                                "type": "questionDone"
+                            })
     #disconnection case
     except WebSocketDisconnect:
         await manager.disconnect(client_id)

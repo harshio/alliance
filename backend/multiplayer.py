@@ -8,6 +8,14 @@ class WebSocketManager:
         self.activeSet: int = 0
         self.host_client: dict[str, WebSocket] = {}
         self.playersDone: int = 0
+    
+    #basic increment method lol, more OOP-oriented and honestly better design
+    def increment(self) -> bool:
+        self.playersDone += 1
+        if self.playersDone == len(self.connected_clients):
+            self.playersDone = 0
+            return True
+        return False
 
     #this function connects a client to the server
     #and adds them to the list
