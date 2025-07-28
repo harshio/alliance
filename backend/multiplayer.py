@@ -28,7 +28,6 @@ class WebSocketManager:
             self.connected_clients[client_id] = websocket
             return True
         else:
-            print("CRY ABOUT IT BITCH WE'RE TESTING")
             return False
     
     async def host_connect(self, websocket: WebSocket, client_id: str) -> bool:
