@@ -23,7 +23,7 @@ def get_db():
 
 class QuestionIn(BaseModel): #purpose of this is to define the shape of POST requests from the frontend
     text: str
-    correctAnswer: str
+    correctAnswer: List[str]
     points: int
     answers: List[str]
     setNumber: int

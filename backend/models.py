@@ -19,7 +19,7 @@ class Question(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     text = Column(String)
-    correctAnswer = Column(String)
+    correctAnswer = Column(StringList)
     points = Column(Integer)
     answers = Column(StringList)
     setNumber = Column(Integer, index=True)
