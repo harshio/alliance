@@ -8,10 +8,10 @@ Base = declarative_base()
 class StringList(TypeDecorator):
     impl = Text
     
-    def process_bind_param(self, value):
+    def process_bind_param(self, value, dialect):
         return json.dumps(value)
     
-    def process_result_value(self, value):
+    def process_result_value(self, value, dialect):
         return json.loads(value)
 
 class Question(Base):
