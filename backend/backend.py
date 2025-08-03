@@ -64,6 +64,15 @@ def get_size(setNumber: int, db: Session = Depends(get_db)):
     
     return size
 
+@app.delete("/api/old/{setNumber}")
+def delete_set(setNumber: int, db: Session = Depends(get_db)):
+    db.query(DBQuestion).filter(
+        DBQuestion.setNumber == setNumber
+    ).delete(synchronize_session=False)
+
+    db.commit()
+    return{"message": f"Deleted set {setNumber}"}
+
 @app.get("/api/question/{setNumber}/{questionNumber}")
 def get_question(setNumber: int, questionNumber: int, db: Session = Depends(get_db)):
     question = db.query(DBQuestion).filter(
