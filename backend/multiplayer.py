@@ -45,5 +45,7 @@ class WebSocketManager:
     async def send_message_to(self, client_id: str, message: dict):
         if client_id in self.connected_clients:
             await self.connected_clients[client_id].send_json(message)
-            #as counter-intuitive as it is, this is actually sending the message
-            #TO self.connected_clients[client_id], not from it
+
+    async def host_send_message(self, client_id: str, message: dict):
+        if client_id in self.host_client:
+            await self.host_client[client_id].send_json(message)

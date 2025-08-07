@@ -148,11 +148,27 @@ async def websocket_endpoint(websocket: WebSocket):
                     })
             elif message.get("type") == "playerDone":
                 finished_question = manager.increment()
+                print(finished_question)
                 if finished_question:
                     for client_identification in manager.connected_clients:
                         await manager.send_message_to(client_identification, {
                                 "type": "questionDone"
                             })
+                    await manager.host_send_message("host", {
+                                "type": "questionDone"
+                            })
+            elif message.get("type") == "timeOut":
+                manager.playersDone = 0
+                for client_identification in manager.connected_clients:
+                        await manager.send_message_to(client_identification, {
+                                "type": "questionDone"
+                            })
+            elif message.get("type") == "setSize":
+                await manager.host_send_message("host", {
+                                "type": "setSize",
+                                "content": message.get("content")
+                            })
+                pass
     #disconnection case
     except WebSocketDisconnect:
         await manager.disconnect(client_id)
