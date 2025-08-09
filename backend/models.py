@@ -24,6 +24,7 @@ class Question(Base):
     answers = Column(StringList)
     setNumber = Column(Integer, index=True)
     questionNumber = Column(Integer)
+    imageURL = Column(String)
 
 engine = create_engine("sqlite:///./questions.db", connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

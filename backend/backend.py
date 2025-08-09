@@ -28,6 +28,7 @@ class QuestionIn(BaseModel): #purpose of this is to define the shape of POST req
     answers: List[str]
     setNumber: int
     questionNumber: int
+    imageURL: str
 
 class Config:
     orm_mode = True
@@ -84,7 +85,7 @@ def get_question(setNumber: int, questionNumber: int, db: Session = Depends(get_
         print(f"❌ No question found for setNumber={setNumber}, questionNumber={questionNumber}")
         raise HTTPException(status_code=404, detail="Question not found")
     
-    return {"text": question.text, "correctAnswer": question.correctAnswer, "points": question.points, "answers": question.answers}
+    return {"text": question.text, "correctAnswer": question.correctAnswer, "points": question.points, "answers": question.answers, "imageURL": question.imageURL}
 
 @app.post("/api/new")
 def save_question(question: QuestionIn, db: Session = Depends(get_db)):
@@ -95,6 +96,7 @@ def save_question(question: QuestionIn, db: Session = Depends(get_db)):
         answers=question.answers,
         setNumber=question.setNumber,
         questionNumber=question.questionNumber,
+        imageURL=question.imageURL
     )
     db.add(new_question)
     db.commit()
