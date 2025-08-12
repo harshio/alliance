@@ -30,8 +30,16 @@ class QuestionIn(BaseModel): #purpose of this is to define the shape of POST req
     questionNumber: int
     imageURL: str
 
-class Config:
-    orm_mode = True
+class QuestionOut(BaseModel): #purpose of this is to define the shape of POST requests from the frontend
+    text: str
+    correctAnswer: List[str]
+    points: int
+    answers: List[str]
+    setNumber: int
+    questionNumber: int
+    imageURL: str
+
+    model_config = {"from_attributes": True}
 
 app.add_middleware(
     CORSMiddleware,
@@ -87,7 +95,7 @@ def get_question(setNumber: int, questionNumber: int, db: Session = Depends(get_
     
     return {"text": question.text, "correctAnswer": question.correctAnswer, "points": question.points, "answers": question.answers, "imageURL": question.imageURL}
 
-@app.post("/api/new")
+@app.post("/api/new", response_model=QuestionOut)
 def save_question(question: QuestionIn, db: Session = Depends(get_db)):
     new_question = DBQuestion(
         text=question.text,
@@ -101,6 +109,8 @@ def save_question(question: QuestionIn, db: Session = Depends(get_db)):
     db.add(new_question)
     db.commit()
     db.refresh(new_question)
+    print(type(new_question.answers))
+    print(type(new_question.correctAnswer))
     return new_question
 
 @app.get("/api/setNumbers", response_model = List[int])
