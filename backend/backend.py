@@ -130,12 +130,17 @@ async def websocket_endpoint(websocket: WebSocket):
     if setNumber is None:
         await manager.host_connect(websocket, client_id)
     else:
-        print("HI MOM")
+        print("A player is connecting")
         print("Player Number: " + str(setNumber))
-        print("Actual Number: " + str(manager.activeSet))
-        thing = await manager.player_connect(websocket, client_id, int(setNumber), manager.activeSet)
+        print("Actual Number: " + str(manager.activeSetID))
+        thing = await manager.player_connect(websocket, client_id, int(setNumber), manager.activeSetID)
         if thing == False:
             return
+        await manager.send_message_to(client_id, {
+            "type": "activeSet",
+            "content": manager.activeSetNumber
+        })
+        print(f"The set number is {manager.activeSetNumber}")
     #the Room component will be something visible to player clients
     #so we need to send a message to all player clients connected to the server
     #whenever each player (except for the host client) joins the server
@@ -144,15 +149,15 @@ async def websocket_endpoint(websocket: WebSocket):
             "type": "playerNames",
             "content": list(manager.connected_clients.keys())
         })
-    print(len(manager.connected_clients))
     
     try:
         while True:
             #turns message sent by 'our' client to server via ws.send(JSON.stringify(message)) into json object
             message = await websocket.receive_json()
             if message.get("type") == "sessionID": #this is getting replaced by the sessionID message
-                manager.activeSet = message.get("content")
-                print(manager.activeSet)
+                manager.activeSetID = message.get("content").get("id")
+                manager.activeSetNumber = message.get("content").get("set")
+                print(manager.activeSetID)
             elif message.get("type") == "startGame":
                for client_identification in manager.connected_clients:
                    await manager.send_message_to(client_identification, {
@@ -180,7 +185,8 @@ async def websocket_endpoint(websocket: WebSocket):
                                 "type": "setSize",
                                 "content": message.get("content")
                             })
-                pass
+                print("THIS SET HAS THIS MANY QUESTIONS:")
+                print(message.get("content"))
     #disconnection case
     except WebSocketDisconnect:
         await manager.disconnect(client_id)

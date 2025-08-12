@@ -5,7 +5,8 @@ class WebSocketManager:
         #for us to to choose between websockets to 
         #send information to
         self.connected_clients: dict[str, WebSocket] = {}
-        self.activeSet: int = 0
+        self.activeSetID: int = 0
+        self.activeSetNumber: int = 0
         self.host_client: dict[str, WebSocket] = {}
         self.playersDone: int = 0
     
