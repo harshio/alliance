@@ -2,6 +2,8 @@ from sqlalchemy import Column, Integer, String, create_engine, Text
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import declarative_base, sessionmaker
 import json
+import os
+from dotenv import load_dotenv 
 
 Base = declarative_base()
 
@@ -17,6 +19,11 @@ class Question(Base):
     questionNumber = Column(Integer)
     imageURL = Column(String)
 
-engine = create_engine("postgresql+psycopg2://demo:Maniac234!@localhost:5432/questions")
+load_dotenv()
+
+username = os.getenv("USERNAME")
+password = os.getenv("PASSWORD")
+
+engine = create_engine(f"postgresql+psycopg2://{username}:{password}@localhost:5432/questions")
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base.metadata.create_all(bind=engine)
