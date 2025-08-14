@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Request, Depends, APIRouter, Body, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Request, Depends, APIRouter, Body, WebSocket, WebSocketDisconnect, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 import requests
 from pydantic import BaseModel
@@ -10,9 +10,22 @@ from models import Question as DBQuestion, SessionLocal
 from multiplayer import WebSocketManager
 import json
 import re
+from botocore.exceptions import BotoCoreError, ClientError, NoCredentialsError
+import boto3, traceback
+import os
+from dotenv import load_dotenv
 
 app = FastAPI()
 manager = WebSocketManager()
+
+load_dotenv()
+
+bucket_name = os.getenv("S3_BUCKET_NAME")
+access_key = os.getenv("AWS_ACCESS_KEY_ID")
+secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+region = os.getenv("AWS_REGION")
+
+s3 = boto3.client("s3", region)
 
 def get_db(): 
     db = SessionLocal()
@@ -94,6 +107,20 @@ def get_question(setNumber: int, questionNumber: int, db: Session = Depends(get_
         raise HTTPException(status_code=404, detail="Question not found")
     
     return {"text": question.text, "correctAnswer": question.correctAnswer, "points": question.points, "answers": question.answers, "imageURL": question.imageURL}
+
+@app.post("/upload")
+async def upload_image(file: UploadFile = File(...), key: str = Form(...)):
+    try:
+        file.file.seek(0)
+        s3.upload_fileobj(
+            file.file, bucket_name, key,
+            ExtraArgs={"ContentType": file.content_type}
+        )
+        return {"ok": True, "key": key}
+    except NoCredentialsError:
+        raise HTTPException(status_code=500, detail="AWS credentials not found")
+    except (ClientError, BotoCoreError) as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/new", response_model=QuestionOut)
 def save_question(question: QuestionIn, db: Session = Depends(get_db)):
