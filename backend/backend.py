@@ -56,7 +56,7 @@ class QuestionOut(BaseModel): #purpose of this is to define the shape of POST re
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://192.168.1.181:443"],
     allow_credentials = True,
     allow_methods=["*"],
     allow_headers=["*"],
